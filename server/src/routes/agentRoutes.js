@@ -2,14 +2,12 @@ const express = require("express");
 const router = express.Router();
 
 const protect = require("../middleware/authMiddleware");
-const upload = require("../middleware/uploadMiddleware");
-
 const {
-  uploadCSV,
-  getAllTasks
-} = require("../controllers/uploadController");
+  createAgent,
+  getAgents
+} = require("../controllers/agentController");
 
-router.post("/", protect, upload.single("file"), uploadCSV);
-router.get("/tasks", protect, getAllTasks);
+router.post("/", protect, createAgent);
+router.get("/", protect, getAgents);
 
 module.exports = router;

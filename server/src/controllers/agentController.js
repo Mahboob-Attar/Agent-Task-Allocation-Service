@@ -2,17 +2,21 @@ const Agent = require("../models/Agent");
 const bcrypt = require("bcryptjs");
 
 // CREATE AGENT
-exports.createAgent = async (req, res) => {
+exports.createAgent = async (req, res, next) => {
   try {
     const { name, email, mobile, password } = req.body;
 
     if (!name || !email || !mobile || !password) {
-      return res.status(400).json({ message: "All fields required" });
+      const error = new Error("All fields are required");
+      error.statusCode = 400;
+      return next(error);
     }
 
     const exists = await Agent.findOne({ email });
     if (exists) {
-      return res.status(400).json({ message: "Agent already exists" });
+      const error = new Error("Agent already exists");
+      error.statusCode = 400;
+      return next(error);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -24,18 +28,34 @@ exports.createAgent = async (req, res) => {
       password: hashedPassword,
     });
 
-    res.status(201).json(agent);
+    res.status(201).json({
+      success: true,
+      message: "Agent created successfully",
+      agent: {
+        id: agent._id,
+        name: agent.name,
+        email: agent.email,
+        mobile: agent.mobile,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    error.statusCode = 500;
+    next(error);
   }
 };
 
 // GET ALL AGENTS
-exports.getAgents = async (req, res) => {
+exports.getAgents = async (req, res, next) => {
   try {
-    const agents = await Agent.find().select("-password");
-    res.status(200).json(agents);
+    const agents = await Agent.find();
+
+    res.status(200).json({
+      success: true,
+      count: agents.length,
+      agents,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    error.statusCode = 500;
+    next(error);
   }
 };

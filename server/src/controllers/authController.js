@@ -3,32 +3,31 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 // REGISTER ADMIN
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
-    // Validate
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      const error = new Error("All fields are required");
+      error.statusCode = 400;
+      return next(error);
     }
 
-    // Check if exists
     const existingAdmin = await Admin.findOne({ email });
     if (existingAdmin) {
-      return res.status(400).json({ message: "Email already exists" });
+      const error = new Error("Email already exists");
+      error.statusCode = 400;
+      return next(error);
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create admin
     const admin = await Admin.create({
       name,
       email,
       password: hashedPassword,
     });
 
-    // Generate JWT
     const token = jwt.sign(
       { id: admin._id },
       process.env.JWT_SECRET,
@@ -36,6 +35,7 @@ exports.register = async (req, res) => {
     );
 
     res.status(201).json({
+      success: true,
       message: "Admin registered successfully",
       token,
       admin: {
@@ -44,36 +44,40 @@ exports.register = async (req, res) => {
         email: admin.email,
       },
     });
-
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    error.statusCode = 500;
+    next(error);
   }
 };
 
-
 // LOGIN ADMIN
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      const error = new Error("Email and password are required");
+      error.statusCode = 400;
+      return next(error);
     }
 
-    // Check if admin exists
-    const admin = await Admin.findOne({ email });
+    //  FIX IS HERE
+    const admin = await Admin.findOne({ email }).select("+password");
+
     if (!admin) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      const error = new Error("Invalid credentials");
+      error.statusCode = 401;
+      return next(error);
     }
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, admin.password);
+
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      const error = new Error("Invalid credentials");
+      error.statusCode = 401;
+      return next(error);
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       { id: admin._id },
       process.env.JWT_SECRET,
@@ -81,6 +85,7 @@ exports.login = async (req, res) => {
     );
 
     res.status(200).json({
+      success: true,
       message: "Login successful",
       token,
       admin: {
@@ -91,6 +96,7 @@ exports.login = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    error.statusCode = 500;
+    next(error);
   }
 };

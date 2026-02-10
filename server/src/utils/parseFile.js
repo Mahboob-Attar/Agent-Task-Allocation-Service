@@ -6,15 +6,22 @@ const parseFile = (fileBuffer) => {
   const rows = xlsx.utils.sheet_to_json(sheet);
 
   if (!rows || rows.length === 0) {
-    throw new Error("Uploaded file is empty");
+    const error = new Error("Uploaded file is empty");
+    error.statusCode = 400;
+    throw error;
   }
 
-  // Validate required fields
+  const requiredColumns = ["FirstName", "Phone", "Notes"];
+
   for (let row of rows) {
-    if (!row.FirstName || !row.Phone) {
-      throw new Error(
-        "Invalid file format. Required columns: FirstName, Phone"
-      );
+    for (let column of requiredColumns) {
+      if (!(column in row)) {
+        const error = new Error(
+          "Invalid file format. Required columns: FirstName, Phone, Notes"
+        );
+        error.statusCode = 400;
+        throw error;
+      }
     }
   }
 

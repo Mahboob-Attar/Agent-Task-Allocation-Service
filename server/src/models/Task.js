@@ -5,18 +5,22 @@ const taskSchema = new mongoose.Schema(
     firstName: {
       type: String,
       required: true,
+      trim: true,
     },
     phone: {
       type: String,
       required: true,
+      trim: true,
     },
     notes: {
       type: String,
+      trim: true,
     },
     agent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Agent",
       required: true,
+      index: true,
     },
   },
   { timestamps: true }
