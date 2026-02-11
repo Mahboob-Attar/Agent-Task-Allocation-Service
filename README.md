@@ -91,7 +91,7 @@ Admin can create agents with the following details:
 | ----------- | ----------- |
 | FirstName   | ✅ Yes      |
 | Phone       | ✅ Yes      |
-| Notes       | ❌ Optional |
+| Notes       | ✅ Yes      |
 
 ---
 
